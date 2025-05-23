@@ -387,7 +387,15 @@
 
     <!-- Script del sito -->
     <script src="script.js"></script>
-    
+
+    <!-- Configurazione della chiave API per OpenAI -->
+    <script>
+        // Imposta la chiave API prima di caricare gli script del chatbot.
+        // Sostituire 'YOUR_OPENAI_API_KEY' con la chiave reale o definire la variabile
+        // in modo sicuro da un file separato non tracciato.
+        window.OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY';
+    </script>
+
     <!-- Script del chatbot -->
     <script src="chatbot-openai.js"></script>
     <script src="chatbot.js"></script>

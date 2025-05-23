@@ -54,7 +54,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatbotSend = document.querySelector('.chatbot-send');
     const contactFormContainer = document.querySelector('.contact-form-container');
     const contactFormSubmit = document.querySelector('.contact-form-submit');
-    
+
+    // Integrazione con OpenAI: la chiave viene letta dalla variabile globale
+    // `OPENAI_API_KEY` che può essere definita prima di caricare questo script.
+    // Sostituire il valore con la propria chiave oppure impostare la variabile
+    // in modo sicuro (ad esempio da un file separato non tracciato).
+    const openAI = new OpenAIIntegration(window.OPENAI_API_KEY || '');
+
     // Variabili di stato
     let conversation = [];
     let waitingForOpenAIResponse = false;
@@ -120,64 +126,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Funzione per gestire la risposta del chatbot
-    function handleBotResponse(userMessage) {
+    async function handleBotResponse(userMessage) {
         // Mostra l'indicatore di digitazione
         showTypingIndicator();
         waitingForOpenAIResponse = true;
-        
-        // Simula una risposta del chatbot (in produzione, qui si chiamerebbe l'API di OpenAI)
-        setTimeout(() => {
-            removeTypingIndicator();
-            waitingForOpenAIResponse = false;
-            
-            // Logica di risposta simulata
-            let botResponse = '';
-            
-            // Verifica se il messaggio contiene parole chiave relative a contatti o ricontatto
-            const contactKeywords = ['contatto', 'contatti', 'ricontattare', 'chiamare', 'email', 'telefono', 'parlare'];
-            const isContactRequest = contactKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
-            
-            // Verifica se il messaggio contiene parole chiave relative a Relevance
-            const relevanceKeywords = ['relevance', 'chi sei', 'cosa fai', 'assistente', 'virtuale'];
-            const isRelevanceQuestion = relevanceKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
-            
-            // Verifica se il messaggio contiene parole chiave relative ai servizi
-            const serviceKeywords = ['servizi', 'intelligenza artificiale', 'ai', 'assessment', 'check-up', 'implementazione', 'action plan'];
-            const isServiceQuestion = serviceKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
-            
-            if (isContactRequest) {
-                botResponse = "Sarò felice di metterti in contatto con un consulente. Preferisci essere ricontattato via email o telefono?";
-            } else if (isRelevanceQuestion) {
-                botResponse = "Sono Relevance, l'assistente virtuale esperta di rilevanza nell'era dell'AI del Centro per la Rilevanza. Sono stato sviluppato dal SIDI per aiutare le aziende a comprendere e sfruttare le opportunità dell'intelligenza artificiale. Come posso aiutarti oggi?";
-            } else if (isServiceQuestion) {
-                botResponse = "Forema & SIDI offrono una piattaforma completa di servizi per guidare le imprese nell'era dell'Intelligenza Artificiale, tra cui: AI Check-up, AI Assessment, Action Plan e Studio di Fattibilità, Supporto all'Implementazione e Aggiornamento Continuo. Su quale servizio vorresti maggiori informazioni?";
-            } else if (userMessage.toLowerCase().includes('email')) {
-                botResponse = "Perfetto! Per essere ricontattato via email, avrei bisogno di alcuni tuoi dati. Potresti compilare il modulo che ti mostrerò?";
-                // Attiva il form di contatto
+
+        try {
+            // Ottieni la risposta dal modello OpenAI utilizzando la conversazione corrente
+            const reply = await openAI.generateResponse(conversation);
+            addMessage(reply);
+
+            // Mostra il form di contatto se l'utente ha richiesto un ricontatto specifico
+            if (userMessage.toLowerCase().includes('email') || userMessage.toLowerCase().includes('telefono')) {
                 setTimeout(() => {
                     contactFormContainer.classList.add('active');
                     chatbotInput.style.display = 'none';
                     chatbotSend.style.display = 'none';
                     contactFormActive = true;
                 }, 1000);
-            } else if (userMessage.toLowerCase().includes('telefono')) {
-                botResponse = "Ottimo! Per essere ricontattato telefonicamente, avrei bisogno di alcuni tuoi dati. Potresti compilare il modulo che ti mostrerò?";
-                // Attiva il form di contatto
-                setTimeout(() => {
-                    contactFormContainer.classList.add('active');
-                    chatbotInput.style.display = 'none';
-                    chatbotSend.style.display = 'none';
-                    contactFormActive = true;
-                }, 1000);
-            } else {
-                botResponse = "Mi dispiace, posso rispondere solo a domande relative ai servizi di intelligenza artificiale offerti da Forema & SIDI, o metterti in contatto con un consulente. Come posso aiutarti con questi argomenti?";
             }
-            
-            addMessage(botResponse);
-            
+
             // Invia la conversazione via email dopo ogni interazione
             sendConversationByEmail();
-        }, 1500);
+        } catch (error) {
+            console.error('Errore nella generazione della risposta:', error);
+            addMessage('Mi dispiace, si è verificato un problema con la risposta.');
+        } finally {
+            removeTypingIndicator();
+            waitingForOpenAIResponse = false;
+        }
     }
     
     // Event listeners
@@ -247,29 +224,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Funzione per integrare l'API di OpenAI (da implementare quando si hanno le API key)
-function callOpenAI(messages, apiKey) {
-    // Questa funzione verrà implementata quando si avranno le API key
-    // Per ora è solo un placeholder
-    
-    // Esempio di come potrebbe essere implementata:
-    /*
-    return fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
-            messages: messages,
-            max_tokens: 150,
-            temperature: 0.7
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        return data.choices[0].message.content;
-    });
-    */
-}
